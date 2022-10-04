@@ -1,0 +1,69 @@
+Nume: Ciineanu Stefan-Andrei
+Grupa: 336CA
+Username pe ACS: stefan.ciineanu
+
+Pentru aceasta tema am folosit cunostintele de la labul 5 si 6, algoritmica 
+iar pentru blas documentatia lapack.
+
+C = B x A x At + Bt x B -- operatia
+
+
+1. BLAS - acesta a fost ultimul task rezolvat si mi s-a parut cel mai 
+dificil. Pentru rezolvare, am despartit operatia in subtaskuri: Bt x B, 
+A x At si B x A x At dupa care le-am adunat. Dificultatea a venit in privinta
+matricei A deoarece e superior triunghiulara. Pentru asta am folosit functia 
+cblas_dtrmm() unde am calculat A x At (cea mai dificila sub-operatie). Apoi
+totul s-a rezumat la inmultiri de matrici cu cblas_dgemm() pt inmultirile cu B.
+In final, adunarea am facut-o intr-un for deoarece nu exista adunare de matrice
+in subrutinele blas.
+
+2. NEOPT - a reprezentat rezolvarea bruta a operatiei, cu complexitati de 
+O(N^3) din cauza celor 3 for-uri pentru inmultirea matricelor. Pentru 
+rezolvare, initial am alocat memorie pt matrici auxiliare in care salvez
+rezultatele partiale ale operatiei. Astfel, calculez matricile in urmatoarea
+ordine: Bt x B, B x A, B x A x At, iar apoi am adunat cele 2 matrici obtinute:
+Bt x B si B x A x At. In ceea ce priveste matricea A fiind superior 
+triunghiulara, am tinut cont de faptul ca sub diagonala principala sunt numai 0
+si am folosit indicii i, j, k astfel incat sa nu mai inmultesc/parcurg si 
+aceasta zona redundanta din matrice. 
+
+3. OPT - am pornit de la rezolvarea neopt si din labul 5 - tehnici de 
+optimizare am aplicat 1) register astfel incat compilatorul sa tina 
+variabilele in registre, permitand un acces mai rapid si 2) am renuntat
+la accesele vectoriale si am dereferentiat folosind pointeri calculand 
+adresele din matrice. Am luat exemplul din laborator cu *orig_pa si l-am 
+aplicat la operatiile mele. Obs: Mi-a placut acest task si am inteles mult
+mai bine partea cu accesarea unei matrice cu pointeri. Daca la inceput, dupa
+optimizarea cu register am avut 22 sau 19 secunde timpul de rulare, 
+optimizarile imi scadeau cate 2 - 4 secunde per parcurgerea unei matrice.
+
+4. CACHEGRIND - Intre cele 3 surse, blas este cea mai eficienta, urmata de 
+opt_m si neopt. Am analizat diferenta intre opt_m si neopt mai jos. In ceea
+ce priveste blas, functiile din biblioteca <cblas> sunt eficiente in privinta
+inmultirii matricelor si obtin cel mai mic numar de refs. Exista si o exceptie,
+si anume numarul de I miss-uri este mai mic la opt, deoarece cu ajutorul 
+registrelor si pointerilor catre adresa accesul la memorie poate fi mai bun. 
+In schimb, D1 miss-urile, branches-urile si mispredict-urile sunt mai bune in 
+blas deoarece biblioteca este creata special pentru inmultirea matricelor, deci
+va fi mai eficienta ca inmultirea de mana.
+
+Adresarea cu pointeri (mai precisa si rapida) plus tinerea variabilelor in 
+registre (din nou acces mai rapid si eficient) au facut ca opt_m sa injumata-
+teasca numarul de de I refs, numarul de D refs este de 6 ori mai mic fata de 
+neopt. Numarul de D1 misses este la fel intre cele 2 variante, la fel si 
+mispredict-urile si branches-urile
+
+5. ANALIZA COMPARATIVA - In privinta graficului, am creat inca 6 teste in 
+inputs si am rulat sursele.
+N va fi 300, 400, 500, 700, 800, 900, 1000, 1200, 1500, iar timpii sunt 
+salvati in fisierul timpi_per_solver. Ca observatie, pentru cel mai mare test
+blas (2,2s) este de mai bine de 10 ori mai eficient decat opt (25s), in timp 
+ce fata neopt (72s) va fi de 35 de ori mai eficient. In medie, din grafic
+opt este de 3 ori mai bun decat neopt, in timp ce blas e de 10 ori mai bun
+fata de opt. De asemenea, in grafic opt si neopt au o panta asemanatoare,
+care creste mult, in timp ce blas ramane aproape de baza graficului cu o 
+panta lenta.
+
+Ca dificutati, am inceput rezolvarea temei in ssh pe vscode, dar dupa un timp
+tot ceda conexiunea pe vscode si a trebuit sa codez in vim :(( cam naspa
+Nu mi-a iesi cu sshfs, iar local imi dadea ceva erori la rulare de la macOS.
